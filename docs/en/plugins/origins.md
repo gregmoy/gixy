@@ -17,7 +17,7 @@ The most common errors with this configuration are:
 
 Misconfiguration example:
 ```nginx
-if ($http_origin ~* ((^https://www\.yandex\.ru)|(^https://ya\.ru)/)) {
+if ($http_origin ~* ((^https://www\.yandex\.ru)|(^https://ya\.ru)$)) {
 	add_header 'Access-Control-Allow-Origin' "$http_origin";
 	add_header 'Access-Control-Allow-Credentials' 'true';
 }
@@ -30,4 +30,4 @@ TODO(buglloc): Regex Ninja?
 
   - fix your regex or toss it away :)
   - if you use regex validation for `Referer` request header, then, possibly (not 100%), you could use [ngx_http_referer_module](http://nginx.org/en/docs/http/ngx_http_referer_module.htmll);
-  - sometimes is much better to use `map` directive without any regex at all.
+  - sometimes it is much better to use the `map` directive without any regex at all.

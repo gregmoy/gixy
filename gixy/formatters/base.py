@@ -1,17 +1,25 @@
 from __future__ import absolute_import
 
+import gixy
 from gixy.directives import block
 
 
 class BaseFormatter(object):
-    skip_parents = {block.Root, block.HttpBlock}
+    skip_parents = set([block.Root, block.HttpBlock])
+
+    def __init__(self):
+        self.reports = {}
+        self.stats = dict.fromkeys(gixy.severity.ALL, 0)
 
     def format_reports(self, reports, stats):
         raise NotImplementedError("Formatter must override format_reports function")
 
-    def format(self, manager):
-        reports = []
-        for result in manager.get_results():
+    def feed(self, path, manager):
+        for severity in gixy.severity.ALL:
+            self.stats[severity] += manager.stats[severity]
+
+        self.reports[path] = []
+        for result in manager.results:
             report = self._prepare_result(manager.root,
                                           summary=result.summary,
                                           severity=result.severity,
@@ -19,9 +27,10 @@ class BaseFormatter(object):
                                           issues=result.issues,
                                           plugin=result.name,
                                           help_url=result.help_url)
-            reports.extend(report)
+            self.reports[path].extend(report)
 
-        return self.format_reports(reports, manager.stats)
+    def flush(self):
+        return self.format_reports(self.reports, self.stats)
 
     def _prepare_result(self, root, issues, severity, summary, description, plugin, help_url):
         result = {}
@@ -74,11 +83,11 @@ class BaseFormatter(object):
                 if leap.is_block:
                     result.append('')
                 directive = str(leap).replace('\n', '\n' + '\t' * (level + 1))
-                result.append('{:s}{:s}'.format('\t' * level, directive))
+                result.append('{indent:s}{dir:s}'.format(indent='\t' * level, dir=directive))
 
             if leap.is_block:
                 result.extend(self._traverse_tree(leap, points, level + 1 if printable else level))
                 if printable and have_parentheses:
-                    result.append('{:s}}}'.format('\t' * level))
+                    result.append('{indent:s}}}'.format(indent='\t' * level))
 
         return result

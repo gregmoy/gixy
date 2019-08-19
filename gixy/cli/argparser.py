@@ -92,7 +92,7 @@ class ArgsParser(ArgumentParser):
         """
         keys = []
         for arg in action.option_strings:
-            if arg in {'--config', '--write-config', '--version'}:
+            if arg in ['--config', '--write-config', '--version']:
                 continue
             if any([arg.startswith(2 * c) for c in self.prefix_chars]):
                 keys += [arg[2:], arg]  # eg. for '--bla' return ['bla', '--bla']
@@ -118,8 +118,8 @@ class ArgsParser(ArgumentParser):
                 for action in self._actions:
                     config_file_keys = self.get_possible_config_keys(action)
                     if config_file_keys and not action.is_positional_arg and \
-                            already_on_command_line(existing_command_line_args,
-                                                    action.option_strings):
+                        already_on_command_line(existing_command_line_args,
+                                                action.option_strings):
                         value = getattr(parsed_namespace, action.dest, None)
                         if value is not None:
                             if type(value) is bool:

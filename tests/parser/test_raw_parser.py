@@ -1,7 +1,4 @@
 from nose.tools import assert_equals
-import mock
-from six import StringIO
-from six.moves import builtins
 from gixy.parser.raw_parser import *
 
 
@@ -235,6 +232,9 @@ if ($host ~* (lori|rage2)\.yandex\.(ru|ua|com|com\.tr)) {
 if ($request_filename ~* ^.*?/(\d+_)([^/]+)$) {
 }
 
+if ($http_user_agent ~* "^WordPress.*; verifying pingback") {
+}
+
 if ($foo = "BAR") { rewrite ^(.*)$ /bar; }
         '''
 
@@ -264,6 +264,8 @@ if ($foo = "BAR") { rewrite ^(.*)$ /bar; }
             ['set', '$x_frame_options', 'ALLOW']
         ]],
         ['if', ['$request_filename', '~*', '^.*?/(\d+_)([^/]+)$'], [
+        ]],
+        ['if', ['$http_user_agent', '~*', '^WordPress.*; verifying pingback'], [
         ]],
         ['if', ['$foo', '=', 'BAR'], [
             ['rewrite', '^(.*)$', '/bar']
@@ -486,6 +488,11 @@ add_header X-Padding-Comment padding;
 
 #
 add_header X-Blank-Comment blank;
+
+if (1) # Comment 
+{
+    add_header X-Inline blank;
+}
         '''
 
     expected = [
@@ -497,6 +504,9 @@ add_header X-Blank-Comment blank;
         ['add_header', 'X-Padding-Comment', 'padding'],
         [''],
         ['add_header', 'X-Blank-Comment', 'blank'],
+        ['if', ['1'], [
+            ['add_header', 'X-Inline', 'blank'],
+        ]],
     ]
 
     assert_config(config, expected)
@@ -525,6 +535,28 @@ def test_empty_config():
     expected = []
 
     assert_config(config, expected)
+
+
+def test_utfbom_decoding():
+    config = b'''\xef\xbb\xbf
+add_header X-Test "Windows-1251";
+        '''
+
+    expected = [
+        ['add_header', 'X-Test', 'Windows-1251']
+    ]
+
+    assert_config(config, expected)
+
+
+def test_national_comment_decoding():
+    config = b'''
+# \xeb\xff-\xeb\xff-\xeb\xff = Lya-lya-lya
+add_header X-Test "Windows-1251";
+        '''
+
+    actual = RawParser().parse(config)
+    assert_equals(len(actual.asList()), 2)
 
 
 def assert_config(config, expected):

@@ -1,4 +1,5 @@
-from nose.tools import assert_is_instance, assert_equal
+from nose.tools import assert_equal
+from tests.asserts import assert_is_instance
 from gixy.parser.nginx_parser import NginxParser
 from gixy.directives.directive import *
 from gixy.directives.block import *
@@ -96,6 +97,15 @@ server {
     listen = include_listen.children[0]
     assert_is_instance(listen, Directive)
     assert_equal(listen.args, ['80'])
+
+
+def test_encoding():
+    configs = [
+        'bar "\xD1\x82\xD0\xB5\xD1\x81\xD1\x82";'
+    ]
+
+    for i, config in enumerate(configs):
+        _parse(config)
 
 
 def assert_config(config, expected):

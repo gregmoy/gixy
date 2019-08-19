@@ -2,7 +2,7 @@ GIXY
 ====
 [![Mozilla Public License 2.0](https://img.shields.io/github/license/yandex/gixy.svg?style=flat-square)](https://github.com/yandex/gixy/blob/master/LICENSE)
 [![Build Status](https://img.shields.io/travis/yandex/gixy.svg?style=flat-square)](https://travis-ci.org/yandex/gixy)
-[![Your feedback is greatly appreciated](https://img.shields.io/maintenance/yes/2017.svg?style=flat-square)](https://github.com/yandex/gixy/issues/new)
+[![Your feedback is greatly appreciated](https://img.shields.io/maintenance/yes/2018.svg?style=flat-square)](https://github.com/yandex/gixy/issues/new)
 [![GitHub issues](https://img.shields.io/github/issues/yandex/gixy.svg?style=flat-square)](https://github.com/yandex/gixy/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/yandex/gixy.svg?style=flat-square)](https://github.com/yandex/gixy/pulls)
 
@@ -12,7 +12,7 @@ GIXY
 Gixy — это утилита для анализа конфигурации Nginx.
 Большей частью служит для обнаружения проблем безопасности, но может искать и иные ошибки.
 
-Официально поддерживаются версии Python 2.7, 3.5 и 3.6
+Официально поддерживаются версии Python 2.7, 3.5, 3.6 и 3.7
 
 &nbsp;
 # Что умеет
@@ -24,6 +24,7 @@ Gixy — это утилита для анализа конфигурации Ng
   * [[host_spoofing] Подделка заголовка запроса Host](https://github.com/yandex/gixy/blob/master/docs/ru/plugins/hostspoofing.md)
   * [[valid_referers] none in valid_referers](https://github.com/yandex/gixy/blob/master/docs/ru/plugins/validreferers.md)
   * [[add_header_multiline] Многострочные заголовоки ответа](https://github.com/yandex/gixy/blob/master/docs/ru/plugins/addheadermultiline.md)
+  * [[alias_traversal] Path traversal при использовании alias](https://github.com/yandex/gixy/blob/master/docs/ru/plugins/aliastraversal.md)
 
 Проблемы, которым Gixy только учится можно найти в [Issues с меткой "new plugin"](https://github.com/yandex/gixy/issues?q=is%3Aissue+is%3Aopen+label%3A%22new+plugin%22)
 

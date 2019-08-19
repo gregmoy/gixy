@@ -4,9 +4,10 @@ import logging
 import fnmatch
 
 from pyparsing import ParseException
-
+from gixy.core.exceptions import InvalidConfiguration
 from gixy.parser import raw_parser
 from gixy.directives import block, directive
+from gixy.utils.text import to_native
 
 LOG = logging.getLogger(__name__)
 
@@ -22,14 +23,13 @@ class NginxParser(object):
         self._init_directives()
 
     def parse_file(self, path, root=None):
-        LOG.debug("Parse file: {}".format(path))
+        LOG.debug("Parse file: {0}".format(path))
         content = open(path).read()
         return self.parse(content=content, root=root, path_info=path)
 
     def parse(self, content, root=None, path_info=None):
         if not root:
             root = block.Root()
-
         try:
             parsed = self.parser.parse(content)
         except ParseException as e:
@@ -38,7 +38,7 @@ class NginxParser(object):
                 LOG.error('Failed to parse config "{file}": {error}'.format(file=path_info, error=error_msg))
             else:
                 LOG.error('Failed to parse config: {error}'.format(error=error_msg))
-            return root
+            raise InvalidConfiguration(error_msg)
 
         if len(parsed) and parsed[0].getName() == 'file_delimiter':
             #  Were parse nginx dump
@@ -70,14 +70,14 @@ class NginxParser(object):
             return None
 
         if klass.is_block:
-            args = [str(v).strip() for v in parsed_args[0]]
+            args = [to_native(v).strip() for v in parsed_args[0]]
             children = parsed_args[1]
 
             inst = klass(parsed_name, args)
             self.parse_block(children, inst)
             return inst
         else:
-            args = [str(v).strip() for v in parsed_args]
+            args = [to_native(v).strip() for v in parsed_args]
             return klass(parsed_name, args)
 
     def _get_directive_class(self, parsed_type, parsed_name):
@@ -103,21 +103,24 @@ class NginxParser(object):
         if self.is_dump:
             return self._resolve_dump_include(pattern=pattern, parent=parent)
         if not self.allow_includes:
-            LOG.debug('Includes are disallowed, skip: {}'.format(pattern))
+            LOG.debug('Includes are disallowed, skip: {0}'.format(pattern))
             return
 
         return self._resolve_file_include(pattern=pattern, parent=parent)
 
     def _resolve_file_include(self, pattern, parent):
         path = os.path.join(self.cwd, pattern)
-        file_path = None
+        exists = False
         for file_path in glob.iglob(path):
+            if not os.path.exists(file_path):
+                continue
+            exists = True
             include = block.IncludeBlock('include', [file_path])
             parent.append(include)
             self.parse_file(file_path, include)
 
-        if not file_path:
-            LOG.warning("File not found: {}".format(path))
+        if not exists:
+            LOG.warning('File not found: {0}'.format(path))
 
     def _resolve_dump_include(self, pattern, parent):
         path = os.path.join(self.cwd, pattern)
@@ -130,7 +133,7 @@ class NginxParser(object):
                 self.parse_block(parsed, include)
 
         if not founded:
-            LOG.warning("File not found: {}".format(path))
+            LOG.warning("File not found: {0}".format(path))
 
     def _prepare_dump(self, parsed_block):
         filename = ''

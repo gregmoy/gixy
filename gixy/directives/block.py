@@ -60,7 +60,7 @@ class Block(Directive):
         self.children.append(directive)
 
     def __str__(self):
-        return '{} {} {}'.format(self.name, ' '.join(self.args), '{')
+        return '{name} {args} {{'.format(name=self.name, args=' '.join(self.args))
 
 
 class Root(Block):
@@ -89,7 +89,7 @@ class ServerBlock(Block):
     def __str__(self):
         server_names = [str(sn) for sn in self.find('server_name')]
         if server_names:
-            return 'server {{\n{}'.format('\n'.join(server_names[:2]))
+            return 'server {{\n{0}'.format('\n'.join(server_names[:2]))
         return 'server {'
 
 
@@ -141,10 +141,10 @@ class IfBlock(Block):
             # if ($request_method = POST)
             self.variable, self.operand, self.value = args
         else:
-            raise Exception('Unknown "if" definition, args: {}'.format(repr(args)))
+            raise Exception('Unknown "if" definition, args: {0!r}'.format(args))
 
     def __str__(self):
-        return '{} ({}) {{'.format(self.name, ' '.join(self.args))
+        return '{name} ({args}) {{'.format(name=self.name, args=' '.join(self.args))
 
 
 class IncludeBlock(Block):
@@ -156,7 +156,7 @@ class IncludeBlock(Block):
         self.file_path = args[0]
 
     def __str__(self):
-        return 'include {};'.format(self.file_path)
+        return 'include {0};'.format(self.file_path)
 
 
 class MapBlock(Block):
@@ -172,4 +172,26 @@ class MapBlock(Block):
     @cached_property
     def variables(self):
         # TODO(buglloc): Finish him!
+        return [Variable(name=self.variable, value='', boundary=None, provider=self, have_script=False)]
+
+
+class GeoBlock(Block):
+    nginx_name = 'geo'
+    self_context = False
+    provide_variables = True
+
+    def __init__(self, name, args):
+        super(GeoBlock, self).__init__(name, args)
+        if len(args) == 1:  # geo uses $remote_addr as default source of the value
+            source = '$remote_addr'
+            variable = args[0].strip('$')
+        else:
+            source = args[0]
+            variable = args[1].strip('$')
+        self.source = source
+        self.variable = variable
+
+    @cached_property
+    def variables(self):
+        # TODO(buglloc): Finish him! -- same as in MapBlock
         return [Variable(name=self.variable, value='', boundary=None, provider=self, have_script=False)]

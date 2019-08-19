@@ -1,4 +1,5 @@
-from nose.tools import assert_equals, assert_is_instance, assert_is_not_none, assert_is_none, assert_true, assert_false
+from nose.tools import assert_equals, assert_true, assert_false
+from tests.asserts import assert_is_instance, assert_is_none, assert_is_not_none
 from gixy.parser.nginx_parser import NginxParser
 from gixy.directives.block import *
 
@@ -148,7 +149,7 @@ def test_block_some_flat():
         '''
 
     directive = _get_parsed(config)
-    for d in {'default_type', 'sendfile', 'keepalive_timeout'}:
+    for d in ['default_type', 'sendfile', 'keepalive_timeout']:
         c = directive.some(d, flat=True)
         assert_is_not_none(c)
         assert_equals(c.name, d)
@@ -202,3 +203,51 @@ def test_block_find_not_flat():
     assert_equals(len(finds), 1)
     assert_equals([x.name for x in finds], ['directive'])
     assert_equals([x.args[0] for x in finds], ['1'])
+
+
+def test_block_map():
+    config = '''
+map $some_var $some_other_var {
+    a   b;
+    default c;
+}
+    '''
+
+    directive = _get_parsed(config)
+    assert_is_instance(directive, MapBlock)
+    assert_true(directive.is_block)
+    assert_false(directive.self_context)
+    assert_true(directive.provide_variables)
+    assert_equals(directive.variable, 'some_other_var')
+
+
+def test_block_geo_two_vars():
+    config = '''
+geo $some_var $some_other_var {
+    1.2.3.4 b;
+    default c;
+}
+    '''
+
+    directive = _get_parsed(config)
+    assert_is_instance(directive, GeoBlock)
+    assert_true(directive.is_block)
+    assert_false(directive.self_context)
+    assert_true(directive.provide_variables)
+    assert_equals(directive.variable, 'some_other_var')
+
+
+def test_block_geo_one_var():
+    config = '''
+geo $some_var {
+    5.6.7.8 d;
+    default e;
+}
+    '''
+
+    directive = _get_parsed(config)
+    assert_is_instance(directive, GeoBlock)
+    assert_true(directive.is_block)
+    assert_false(directive.self_context)
+    assert_true(directive.provide_variables)
+    assert_equals(directive.variable, 'some_var')

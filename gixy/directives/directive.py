@@ -41,7 +41,7 @@ class Directive(object):
         raise NotImplementedError()
 
     def __str__(self):
-        return '{} {};'.format(self.name, ' '.join(self.args))
+        return '{name} {args};'.format(name=self.name, args=' '.join(self.args))
 
 
 class AddHeaderDirective(Directive):
@@ -84,6 +84,20 @@ class AuthRequestSetDirective(Directive):
         return [Variable(name=self.variable, value=self.value, provider=self)]
 
 
+class PerlSetDirective(Directive):
+    nginx_name = 'perl_set'
+    provide_variables = True
+
+    def __init__(self, name, args):
+        super(PerlSetDirective, self).__init__(name, args)
+        self.variable = args[0].strip('$')
+        self.value = args[1]
+
+    @property
+    def variables(self):
+        return [Variable(name=self.variable, provider=self, have_script=False)]
+
+
 class SetByLuaDirective(Directive):
     nginx_name = 'set_by_lua'
     provide_variables = True
@@ -101,7 +115,7 @@ class SetByLuaDirective(Directive):
 class RewriteDirective(Directive):
     nginx_name = 'rewrite'
     provide_variables = True
-    boundary = Regexp('[^\s\r\n]')
+    boundary = Regexp(r'[^\s\r\n]')
 
     def __init__(self, name, args):
         super(RewriteDirective, self).__init__(name, args)
@@ -131,3 +145,11 @@ class RootDirective(Directive):
     @property
     def variables(self):
         return [Variable(name='document_root', value=self.path, provider=self)]
+
+
+class AliasDirective(Directive):
+    nginx_name = 'alias'
+
+    def __init__(self, name, args):
+        super(AliasDirective, self).__init__(name, args)
+        self.path = args[0]

@@ -1,4 +1,6 @@
 import logging
+import codecs
+import six
 from cached_property import cached_property
 
 from pyparsing import (
@@ -27,11 +29,19 @@ class RawParser(object):
         """
         Returns the parsed tree.
         """
-        content = data.strip()
+        if isinstance(data, six.binary_type):
+            if data[:3] == codecs.BOM_UTF8:
+                encoding = 'utf-8-sig'
+            else:
+                encoding = 'latin1'
+            content = data.decode(encoding).strip()
+        else:
+            content = data.strip()
+
         if not content:
             return ParseResults()
 
-        return self.script.parseString(data, parseAll=True)
+        return self.script.parseString(content, parseAll=True)
 
     @cached_property
     def script(self):
@@ -64,7 +74,7 @@ class RawParser(object):
             (if_modifier + Optional(space) + value) |
             (variable + Optional(space + if_modifier + Optional(space) + value))
         )
-        condition = Regex(r'\((?:[^();\n\r\\]|(?:\(.*\))|(?:\\.))+?\)')\
+        condition = Regex(r'\((?:[^()\n\r\\]|(?:\(.*\))|(?:\\.))+?\)')\
             .setParseAction(lambda s, l, t: condition_body.parseString(t[0][1:-1]))
 
         # rules
@@ -116,6 +126,7 @@ class RawParser(object):
         if_block << (
             Keyword("if") +
             Group(condition) +
+            Suppress(Optional(comment)) +
             Group(
                 left_bracket +
                 Optional(sub_block) +
@@ -127,6 +138,7 @@ class RawParser(object):
             Group(
                 Optional(space + location_modifier) +
                 Optional(space) + value) +
+            Suppress(Optional(comment)) +
             Group(
                 left_bracket +
                 Optional(sub_block) +
@@ -145,6 +157,7 @@ class RawParser(object):
         generic_block << (
             keyword +
             Group(ZeroOrMore(space + value)) +
+            Suppress(Optional(comment)) +
             Group(
                 left_bracket +
                 Optional(sub_block) +

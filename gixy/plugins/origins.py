@@ -8,7 +8,7 @@ LOG = logging.getLogger(__name__)
 
 
 class origins(Plugin):
-    """
+    r"""
     Insecure example:
         if ($http_referer !~ "^https?://([^/]+metrika.*yandex\.ru/"){
             add_header X-Frame-Options SAMEORIGIN;
@@ -29,7 +29,7 @@ class origins(Plugin):
         if self.config.get('domains') and self.config.get('domains')[0] and self.config.get('domains')[0] != '*':
             domains = '|'.join(re.escape(d) for d in self.config.get('domains'))
         else:
-            domains = '[^/.]*\.[^/]{2,7}'
+            domains = r'[^/.]*\.[^/]{2,7}'
 
         scheme = 'https{http}'.format(http=('?' if not self.config.get('https_only') else ''))
         regex = r'^{scheme}://(?:[^/.]*\.){{0,10}}(?P<domain>{domains})(?::\d*)?(?:/|\?|$)'.format(
@@ -39,16 +39,16 @@ class origins(Plugin):
         self.valid_re = re.compile(regex)
 
     def audit(self, directive):
-        if directive.operand not in {'~', '~*', '!~', '!~*'}:
+        if directive.operand not in ['~', '~*', '!~', '!~*']:
             # Not regexp
             return
 
-        if directive.variable not in {'$http_referer', '$http_origin'}:
+        if directive.variable not in ['$http_referer', '$http_origin']:
             # Not interesting
             return
 
         invalid_referers = set()
-        regexp = Regexp(directive.value, case_sensitive=(directive.operand in {'~', '!~'}))
+        regexp = Regexp(directive.value, case_sensitive=(directive.operand in ['~', '!~']))
         for value in regexp.generate('/', anchored=True):
             if value.startswith('^'):
                 value = value[1:]
